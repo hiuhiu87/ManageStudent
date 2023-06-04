@@ -76,7 +76,15 @@ public class Grade {
 
     public float getAvgScore() {
         float avg = (engScore + itScore + sportScore) / 3;
-        return (float) (Math.round(avg * 100.0) / 100.0);
+        this.avgScore = (float) (Math.round(avg * 100.0) / 100.0);
+        return avgScore;
     }
+
+    @Override
+    public String toString() {
+        return "Grade{" + "id=" + id + ", studentCode=" + studentCode + ", engScore=" + engScore + ", itScore=" + itScore + ", sportScore=" + sportScore + ", avgScore=" + avgScore + '}';
+    }
+    
+    
     
 }

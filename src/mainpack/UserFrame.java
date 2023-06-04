@@ -6,6 +6,8 @@ package mainpack;
 
 import dao.GradeDAO;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -78,6 +80,7 @@ public class UserFrame extends javax.swing.JFrame {
         preBtn = new javax.swing.JButton();
         lastBtn = new javax.swing.JButton();
         currentIndexGrade = new javax.swing.JLabel();
+        sortBtn = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setIconImages(null);
@@ -326,6 +329,13 @@ public class UserFrame extends javax.swing.JFrame {
         currentIndexGrade.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         currentIndexGrade.setText("Record");
 
+        sortBtn.setText("Sắp Xếp");
+        sortBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                sortBtnActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -346,7 +356,8 @@ public class UserFrame extends javax.swing.JFrame {
                                     .addComponent(updateBtn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(delBtn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                     .addComponent(saveBtn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(newBtn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                    .addComponent(newBtn, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(sortBtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                 .addGap(0, 0, Short.MAX_VALUE)))
                         .addGap(71, 71, 71))))
             .addGroup(layout.createSequentialGroup()
@@ -390,8 +401,10 @@ public class UserFrame extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addComponent(delBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(updateBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 38, Short.MAX_VALUE)
+                        .addComponent(updateBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(sortBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 28, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(currentIndexGrade, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 26, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -509,6 +522,16 @@ public class UserFrame extends javax.swing.JFrame {
         showCurrentChoice(currentIndex);
     }//GEN-LAST:event_lastBtnActionPerformed
 
+    private void sortBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sortBtnActionPerformed
+        //sort by avg score
+        Collections.sort(listGrades, (Grade o1, Grade o2) -> o1.getAvgScore() > o2.getAvgScore() ? 1 : -1);
+        model.setRowCount(0);
+        for (Grade grade : listGrades) {
+            Object[] row = {grade.getStudentCode(), grade.getEngScore(), grade.getItScore(), grade.getSportScore(), grade.getAvgScore()};
+            model.addRow(row);
+        }
+    }//GEN-LAST:event_sortBtnActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JLabel avgScroreDisplay;
@@ -541,6 +564,7 @@ public class UserFrame extends javax.swing.JFrame {
     private javax.swing.JButton searchBtn;
     private javax.swing.JTextField searchInput;
     private javax.swing.JLabel searchLabel;
+    private javax.swing.JButton sortBtn;
     private javax.swing.JLabel sportErr;
     private javax.swing.JTextField sportInput;
     private javax.swing.JLabel sportLabel;
