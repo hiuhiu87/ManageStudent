@@ -4,10 +4,10 @@
  */
 package mainpack;
 
+import appservice.UserService;
 import dao.GradeDAO;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
 import javax.swing.table.DefaultTableModel;
@@ -23,18 +23,19 @@ public class UserFrame extends javax.swing.JFrame {
      * Creates new form LoginFrame
      */
     DefaultTableModel model;
-    ArrayList<Grade> listGrades;
+    UserService service;
     int currentIndex = -1;
 
     public UserFrame() {
         initComponents();
-        model = new DefaultTableModel();
-        changeColumnName();
-        fillTable();
-        displayTable.setModel(model);
         this.setResizable(false);
         this.setTitle("Quản Lý Điểm Sinh Viên");
         this.setIconImage(new ImageIcon("D:\\Java_source\\Lab_Java_3\\Assignment\\src\\imgicon\\dashboard.png").getImage());
+        model = new DefaultTableModel();
+        service = new UserService();
+        changeColumnName();
+        fillTable(service.getGradeLists());
+        displayTable.setModel(model);
     }
 
     /**
@@ -345,7 +346,7 @@ public class UserFrame extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(searchBorderLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(328, 721, Short.MAX_VALUE))
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -423,18 +424,12 @@ public class UserFrame extends javax.swing.JFrame {
     private void searchBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchBtnActionPerformed
         if (searchInput.getText().isEmpty()) {
             JOptionPane.showMessageDialog(this, "Bạn Chưa Nhập Vào Mã Sinh Viên");
-        }else{
-            String idSearch = searchInput.getText();
-            for (Grade grade : listGrades) {
-                if (grade.getId().equalsIgnoreCase(idSearch)) {
-                    System.out.println(idSearch);
-                    System.out.println(grade.getId());
-                    Object[] row = {grade.getStudentCode(), grade.getEngScore(), grade.getItScore(), grade.getSportScore(), grade.getAvgScore()};
-                    model.setRowCount(0);
-                    model.addRow(row);
-                    int indexSearch = listGrades.indexOf(grade);
-                    showCurrentChoice(indexSearch);
-                }
+        } else {
+            ArrayList<Grade> listSearchFound = service.searchFunction(searchInput.getText());
+            if (listSearchFound.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Không Có Sinh Viên Nào");
+            } else {
+                fillTable(listSearchFound);
             }
         }
     }//GEN-LAST:event_searchBtnActionPerformed
@@ -445,17 +440,17 @@ public class UserFrame extends javax.swing.JFrame {
 
     private void saveBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveBtnActionPerformed
         Grade grNew = inputValidation();
-        
+
         if (grNew != null) {
-            for (Grade grade : listGrades) {
+            for (Grade grade : service.getGradeLists()) {
                 if (grade.getId().equalsIgnoreCase(grNew.getId())) {
                     JOptionPane.showMessageDialog(this, "ID Sinh Viên Đã Tồn Tại (Chỉ thể Sửa Hoặc Xóa)");
                     return;
                 }
             }
-             GradeDAO.getInstance().insert(grNew);
-             fillTable();
-             JOptionPane.showMessageDialog(this, "Nhập Điểm Thành Công");
+            service.addFunction(grNew);
+            fillTable(service.getGradeLists());
+            JOptionPane.showMessageDialog(this, "Nhập Điểm Thành Công");
         }
     }//GEN-LAST:event_saveBtnActionPerformed
 
@@ -463,14 +458,11 @@ public class UserFrame extends javax.swing.JFrame {
         int rowSel = displayTable.getSelectedRow();
         if (rowSel != -1) {
             Grade grCheck = inputValidation();
-            Grade grUpdate = listGrades.get(rowSel);
+            Grade grUpdate = service.getGradeLists().get(rowSel);
             if (grCheck != null) {
-                grUpdate = grCheck;
-                GradeDAO.getInstance().update(grUpdate);
-                fillTable();
-                JOptionPane.showMessageDialog(this, "Nhập Điểm Thành Công");
+
             }
-        }else{
+        } else {
             JOptionPane.showMessageDialog(this, "Bạn Chưa Chọn Vào Sinh Viên Cần Sửa Điểm");
         }
     }//GEN-LAST:event_updateBtnActionPerformed
@@ -478,7 +470,7 @@ public class UserFrame extends javax.swing.JFrame {
     private void displayTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_displayTableMouseClicked
         int rowSel = displayTable.getSelectedRow();
         codeStuInput.setEditable(false);
-        
+
         if (rowSel != -1) {
             currentIndex = rowSel;
             showCurrentChoice(currentIndex);
@@ -488,48 +480,73 @@ public class UserFrame extends javax.swing.JFrame {
 
     private void preBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_preBtnActionPerformed
         try {
+            if (service.getGradeLists().isEmpty()) {
+                throw new Exception("Chưa Có Sinh Viên Nào");
+            }
             currentIndex--;
             if (currentIndex < 0) {
-                currentIndex = listGrades.size() - 1;
+                currentIndex = service.getGradeLists().size() - 1;
             }
 
             showCurrentChoice(currentIndex);
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            JOptionPane.showMessageDialog(this, e.getMessage());
         }
 
     }//GEN-LAST:event_preBtnActionPerformed
 
     private void nextBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextBtnActionPerformed
         try {
+            if (service.getGradeLists().isEmpty()) {
+                throw new Exception("Chưa Có Sinh Viên Nào");
+            }
             currentIndex++;
-            if (currentIndex >= listGrades.size()) {
+            if (currentIndex >= service.getGradeLists().size()) {
                 currentIndex = 0;
             }
             showCurrentChoice(currentIndex);
         } catch (Exception e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, e.getMessage());
         }
     }//GEN-LAST:event_nextBtnActionPerformed
 
     private void firsrBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_firsrBtnActionPerformed
-        currentIndex = 0;
-        showCurrentChoice(currentIndex);
+
+        try {
+            if (service.getGradeLists().isEmpty()) {
+                throw new Exception("Chưa Có Sinh Viên Nào");
+            }
+
+            currentIndex = 0;
+            showCurrentChoice(currentIndex);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
+        }
+
     }//GEN-LAST:event_firsrBtnActionPerformed
 
     private void lastBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_lastBtnActionPerformed
-        currentIndex = listGrades.size() - 1;
-        showCurrentChoice(currentIndex);
+        try {
+            if (service.getGradeLists().isEmpty()) {
+                throw new Exception("Chưa Có Sinh Viên Nào");
+            }
+            currentIndex = service.getGradeLists().size() - 1;
+            showCurrentChoice(currentIndex);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
+        }
+        
+        
     }//GEN-LAST:event_lastBtnActionPerformed
 
     private void sortBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sortBtnActionPerformed
         //sort by avg score
-        Collections.sort(listGrades, (Grade o1, Grade o2) -> o1.getAvgScore() > o2.getAvgScore() ? 1 : -1);
-        model.setRowCount(0);
-        for (Grade grade : listGrades) {
-            Object[] row = {grade.getStudentCode(), grade.getEngScore(), grade.getItScore(), grade.getSportScore(), grade.getAvgScore()};
-            model.addRow(row);
-        }
+//        Collections.sort(listGrades, (Grade o1, Grade o2) -> o1.getAvgScore() > o2.getAvgScore() ? 1 : -1);
+//        model.setRowCount(0);
+//        for (Grade grade : listGrades) {
+//            Object[] row = {grade.getStudentCode(), grade.getEngScore(), grade.getItScore(), grade.getSportScore(), grade.getAvgScore()};
+//            model.addRow(row);
+//        }
     }//GEN-LAST:event_sortBtnActionPerformed
 
 
@@ -571,10 +588,9 @@ public class UserFrame extends javax.swing.JFrame {
     private javax.swing.JButton updateBtn;
     // End of variables declaration//GEN-END:variables
 
-    public void fillTable() {
-        listGrades = GradeDAO.getInstance().selectAll();
+    public void fillTable(ArrayList<Grade> displayList) {
         model.setRowCount(0);
-        for (Grade grade : listGrades) {
+        for (Grade grade : displayList) {
             Object[] row = {grade.getStudentCode(), grade.getEngScore(), grade.getItScore(), grade.getSportScore(), grade.getAvgScore()};
             model.addRow(row);
         }
@@ -590,7 +606,7 @@ public class UserFrame extends javax.swing.JFrame {
     }
 
     public void showCurrentChoice(int index) {
-        Grade gr = listGrades.get(index);
+        Grade gr = service.getGradeLists().get(index);
         String nameStu = GradeDAO.getInstance().getNameStudent(gr.getStudentCode());
         nameDisplay.setText(nameStu);
         codeStuInput.setText(gr.getStudentCode());
@@ -600,7 +616,7 @@ public class UserFrame extends javax.swing.JFrame {
         sportInput.setText(String.valueOf(gr.getSportScore()));
         avgScroreDisplay.setText(String.valueOf(gr.getAvgScore()));
         displayTable.setRowSelectionInterval(currentIndex, currentIndex);
-        currentIndexGrade.setText("Record: " + (index + 1) + " / " + listGrades.size());
+        currentIndexGrade.setText("Record: " + (index + 1) + " / " + service.getGradeLists().size());
     }
 
     private Grade inputValidation() {
@@ -616,6 +632,10 @@ public class UserFrame extends javax.swing.JFrame {
         } else if (!codeStuInput.getText().startsWith("PH")) {
             countErr++;
             codeErr.setText("Mã Sinh Viên Sai Cú Pháp");
+
+        } else if (service.checkValidStudentCode(codeStuInput.getText())) {
+            countErr++;
+            codeErr.setText("Mã Sinh Viên Không Tồn Tại");
         } else {
             stucode = codeStuInput.getText();
             codeErr.setText("");
@@ -668,8 +688,8 @@ public class UserFrame extends javax.swing.JFrame {
         }
         return null;
     }
-    
-    public void clearForm(){
+
+    public void clearForm() {
         nameDisplay.setText("");
         codeStuInput.setEditable(true);
         codeStuInput.setText("");
@@ -681,6 +701,6 @@ public class UserFrame extends javax.swing.JFrame {
         engError.setText("");
         itErr.setText("");
         sportErr.setText("");
-        fillTable();
+        fillTable(service.getGradeLists());
     }
 }

@@ -35,17 +35,6 @@ public class ImageConvert {
             return null;
         }
     }
-
-//    public static byte[] convertImg(String filename) {
-//        try {
-//            Path path = Path.of(filename);
-//            return Files.readAllBytes(path);
-//        } catch (IOException e) {
-//            System.out.println("Loi convert");
-//            e.printStackTrace();
-//            return null;
-//        }
-//    }
     
     public static byte[] convertImg(Icon icon){
     try {

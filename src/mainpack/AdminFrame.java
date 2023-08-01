@@ -4,13 +4,13 @@
  */
 package mainpack;
 
+import appservice.AdminService;
 import dao.StudentDAO;
 import imageconvert.ImageConvert;
 import java.awt.HeadlessException;
 import java.awt.Image;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Iterator;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
@@ -28,18 +28,19 @@ import model.Student;
 public class AdminFrame extends javax.swing.JFrame {
 
     DefaultTableModel model;
-    ArrayList<Student> listStudents;
+    AdminService service;
     private String avatarStudent = "";
+
     public AdminFrame() {
         initComponents();
-        model = new DefaultTableModel();
-        listStudents = StudentDAO.getInstance().selectAll();
-        changeColumnName();
-        fillTable();
-        displayTable.setModel(model);
         this.setResizable(false);
         ImageIcon icon = new ImageIcon("D:\\Java_source\\Lab_Java_3\\Assignment\\src\\imgicon\\admin_1.png");
         this.setIconImage(icon.getImage());
+        model = new DefaultTableModel();
+        service = new AdminService(StudentDAO.getInstance().selectAll());
+        changeColumnName();
+        fillTable();
+        displayTable.setModel(model);
     }
 
     /**
@@ -335,7 +336,7 @@ public class AdminFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(addressErr, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(41, 41, 41)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 196, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -344,41 +345,56 @@ public class AdminFrame extends javax.swing.JFrame {
 
     private void newBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_newBtnActionPerformed
         resetForm();
-        displayImage.setText("Ấn Vào Đây Để Chọn Ảnh");
+
     }//GEN-LAST:event_newBtnActionPerformed
 
 
     private void displayImageMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_displayImageMouseClicked
         ImageIcon img = new ImageIcon();
         avatarStudent = choseFile(img, displayImage);
-        displayImage.setText("");
+
     }//GEN-LAST:event_displayImageMouseClicked
 
     private void saveBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveBtnActionPerformed
-       addFunction();
+        Student stAdd = inputValidation();
+        if (stAdd != null) {
+            service.addFunction(stAdd);
+            fillTable();
+            JOptionPane.showMessageDialog(this, "Thêm Sinh Viên Thành Công");
+        }
     }//GEN-LAST:event_saveBtnActionPerformed
 
     private void displayTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_displayTableMouseClicked
         int rowIndex = displayTable.getSelectedRow();
         showCurrentStudent(rowIndex);
+        System.out.println(displayImage.getIcon().toString());
     }//GEN-LAST:event_displayTableMouseClicked
 
     private void updateBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_updateBtnActionPerformed
-        updateFunction();
+        int rowSelected = displayTable.getSelectedRow();
+        if (rowSelected >= 0) {
+            Student stUpdate = inputValidation();
+            if (stUpdate != null) {
+                service.updateFunction(stUpdate);
+                fillTable();
+                JOptionPane.showMessageDialog(this, "Cập Nhật Thành Công");
+            }
+        } else {
+            JOptionPane.showMessageDialog(this, "Bạn Chưa Chọn Vào Sinh Viên Cần Update");
+        }
     }//GEN-LAST:event_updateBtnActionPerformed
 
     private void deleteBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_deleteBtnActionPerformed
-        for (Iterator<Student> iterator = listStudents.iterator(); iterator.hasNext();) {
-            Student next = iterator.next();
-            if (next.getStudentCode().equals(codeInput.getText())) {
-                listStudents.remove(next);
-                StudentDAO.getInstance().delete(next);
-            }
+        int rowSelected = displayTable.getSelectedRow();
+        if (rowSelected >= 0) {
+            Student stRemove = service.getStudentLists().get(rowSelected);
+            service.deleteFunction(stRemove);
+            fillTable();
+            JOptionPane.showMessageDialog(this, "Xóa Sinh viên Thành Công");
+            resetForm();
+        } else {
+            JOptionPane.showMessageDialog(this, "Bạn Chưa Chọn Vào Dòng Có Sinh Viên Cần Xóa");
         }
-        
-        JOptionPane.showMessageDialog(this, "Xóa Sinh viên Thành Công");
-        fillTable();
-        resetForm();
     }//GEN-LAST:event_deleteBtnActionPerformed
 
 
@@ -414,37 +430,6 @@ public class AdminFrame extends javax.swing.JFrame {
     private javax.swing.JButton updateBtn;
     // End of variables declaration//GEN-END:variables
 
-    public void addFunction() {
-        Student stNew = inputValidation();
-        if (stNew != null) {
-            for (Student student : listStudents) {
-                if (student.getStudentCode().equalsIgnoreCase(stNew.getStudentCode())) {
-                    JOptionPane.showMessageDialog(this, "Mã Sinh Viên Đã Tồn Tại");
-                    return;
-                }
-            }
-            listStudents.add(stNew);
-            StudentDAO.getInstance().insert(stNew);
-            fillTable();
-            JOptionPane.showMessageDialog(this, "Thêm Sinh Viên Thành Công");
-        }
-    }
-
-    public void updateFunction(){
-        int rowSel = displayTable.getSelectedRow();
-        
-        if (rowSel != -1) {
-            Student stCheck = inputValidation();
-            if (stCheck != null) {
-                StudentDAO.getInstance().update(stCheck);
-                JOptionPane.showMessageDialog(this, "Cập Nhật Dữ Liệu Thành Công !");
-                fillTable();
-            }else{
-                JOptionPane.showMessageDialog(this, "Cập Nhật Thông Tin Không Thành Công");
-            }
-        }
-    }
-    
     public void changeColumnName() {
         ArrayList<String> coLumnName = StudentDAO.getInstance().getColumnNames();
 
@@ -457,17 +442,18 @@ public class AdminFrame extends javax.swing.JFrame {
         try {
             JFileChooser chooser = new JFileChooser();
             FileFilter imageFilter = new FileNameExtensionFilter(
-            "Image files", ImageIO.getReaderFileSuffixes());
+                    "Image files", ImageIO.getReaderFileSuffixes());
             chooser.addChoosableFileFilter(imageFilter);
             chooser.showOpenDialog(null);
             File file = chooser.getSelectedFile();
             String filename = file.getAbsolutePath();
             imageIcon = new ImageIcon(new ImageIcon(filename).getImage().getScaledInstance(displayImage.getWidth(), displayImage.getHeight(), Image.SCALE_SMOOTH));
+            displayImage.setText("");
             displayImg.setIcon(imageIcon);
             return filename;
-        } catch (HeadlessException e ) {
+        } catch (HeadlessException e) {
             return "No File Chosen";
-        } catch (NullPointerException e){
+        } catch (NullPointerException e) {
             JOptionPane.showMessageDialog(this, "Bạn Chưa Chọn File Ảnh!");
             return e.getMessage();
         }
@@ -482,114 +468,111 @@ public class AdminFrame extends javax.swing.JFrame {
         displayImage.setText("Ấn Vào Để Chọn Ảnh");
         displayImage.setIcon(null);
     }
-    
-    public void fillTable(){
-        listStudents = StudentDAO.getInstance().selectAll();
+
+    public void fillTable() {
+        service.setStudentLists(StudentDAO.getInstance().selectAll());
         model.setRowCount(0);
-        for (Student st : listStudents) {
+        for (Student st : service.getStudentLists()) {
             Object[] row = {st.getStudentCode(), st.getName(), st.getEmail(), st.getPhone(), st.getGenderString(), st.getAddress(), st.getAvatar()};
             model.addRow(row);
         }
     }
-    
-    private Student inputValidation(){
+
+    private Student inputValidation() {
         String studentCode = "";
-            String name = "";
-            String email = "";
-            String phone = "";
-            boolean gender;
-            String address = "";
-            byte[] avatarImg = null;
+        String name = "";
+        String email = "";
+        String phone = "";
+        boolean gender;
+        String address = "";
+        byte[] avatarImg = null;
 
-            int coutError = 0;
+        int coutError = 0;
 
-            if (codeInput.getText().isEmpty()) {
+        if (codeInput.getText().isEmpty()) {
+            coutError++;
+            stuCodeErr.setText("Bạn Chưa Nhập Vào Mã Sinh Viên !");
+        } else {
+            if (codeInput.getText().length() < 5 && !codeInput.getText().startsWith("PH")) {
                 coutError++;
-                stuCodeErr.setText("Bạn Chưa Nhập Vào Mã Sinh Viên !");
+                stuCodeErr.setText("Mã Sinh Viên Chưa Đúng Định Dạng !");
             } else {
-                if (codeInput.getText().length() < 5 && !codeInput.getText().startsWith("PH")) {
-                    coutError++;
-                    stuCodeErr.setText("Mã Sinh Viên Chưa Đúng Định Dạng !");
-                } else {
-                    studentCode = codeInput.getText();
-                    stuCodeErr.setText("");
-                }
+                studentCode = codeInput.getText();
+                stuCodeErr.setText("");
             }
+        }
 
-            if (nameInput.getText().isEmpty()) {
+        if (nameInput.getText().isEmpty()) {
+            coutError++;
+            nameErr.setText("Bạn Chưa Nhập Vào Họ Tên !");
+        } else {
+            if (nameInput.getText().length() < 20 && nameInput.getText().length() > 40) {
                 coutError++;
-                nameErr.setText("Bạn Chưa Nhập Vào Họ Tên !");
+                nameErr.setText("Tên Sinh Viên Chưa Đúng Định Dạng !");
             } else {
-                if (nameInput.getText().length() < 20 && nameInput.getText().length() > 40) {
-                    coutError++;
-                    nameErr.setText("Tên Sinh Viên Chưa Đúng Định Dạng !");
-                } else {
-                    name = nameInput.getText();
-                    nameErr.setText("");
-                }
+                name = nameInput.getText();
+                nameErr.setText("");
             }
+        }
 
-            if (emailInput.getText().isEmpty()) {
+        if (emailInput.getText().isEmpty()) {
+            coutError++;
+            emailErr.setText("Bạn Chưa Nhập Vào Email !");
+        } else {
+            if (!emailInput.getText().matches("^[A-Za-z0-9]+[A-Za-z0-9]*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)$")) {
                 coutError++;
-                emailErr.setText("Bạn Chưa Nhập Vào Email !");
+                emailErr.setText("Địa Chỉ Email Chưa Đúng Định Dạng !");
             } else {
-                if (!emailInput.getText().matches("^[A-Za-z0-9]+[A-Za-z0-9]*@[A-Za-z0-9]+(\\.[A-Za-z0-9]+)$")) {
-                    coutError++;
-                    emailErr.setText("Địa Chỉ Email Chưa Đúng Định Dạng !");
-                } else {
-                    email = emailInput.getText();
-                    emailErr.setText("");
-                }
+                email = emailInput.getText();
+                emailErr.setText("");
             }
+        }
 
-            if (phoneInput.getText().isEmpty()) {
+        if (phoneInput.getText().isEmpty()) {
+            coutError++;
+            phoneErr.setText("Bạn Chưa Nhập Vào Số Điện Thoại !");
+        } else {
+            if (!phoneInput.getText().matches("0\\d{9,10}")) {
                 coutError++;
-                phoneErr.setText("Bạn Chưa Nhập Vào Số Điện Thoại !");
+                phoneErr.setText("Số Điện Thoại Chưa Đúng Định Dạng !");
             } else {
-                if (!phoneInput.getText().matches("0\\d{9,10}")) {
-                    coutError++;
-                    phoneErr.setText("Số Điện Thoại Chưa Đúng Định Dạng !");
-                } else {
-                    phone = phoneInput.getText();
-                    phoneErr.setText("");
-                }
+                phone = phoneInput.getText();
+                phoneErr.setText("");
             }
+        }
 
-            if (maleRadio.isSelected()) {
-                gender = true;
-            } else {
-                gender = false;
-            }
+        if (maleRadio.isSelected()) {
+            gender = true;
+        } else {
+            gender = false;
+        }
 
-            if (addressInput.getText().isEmpty()) {
-                coutError++;
-                addressErr.setText("Bạn Chưa Nhập Vào Địa Chỉ !");
-            } else {
-                address = addressInput.getText();
-                addressErr.setText("");
-            }
+        if (addressInput.getText().isEmpty()) {
+            coutError++;
+            addressErr.setText("Bạn Chưa Nhập Vào Địa Chỉ !");
+        } else {
+            address = addressInput.getText();
+            addressErr.setText("");
+        }
 
-            if (avatarStudent.equals("")) {
-                if (displayImage.getIcon() == null) {
-                    coutError++;
-                    JOptionPane.showMessageDialog(this, "Bạn Chưa Chọn Ảnh Cho Sinh Viên");
-                }
-            }else {
-                avatarImg = ImageConvert.convertImg(avatarStudent);
-                if (avatarImg == null) {
-                    avatarImg = ImageConvert.convertImg(displayImage.getIcon());
-                }
-            }
-            
-            if (coutError == 0) {
-                Student st = new Student(studentCode, name, email, phone, gender, address, avatarImg);
-                return st;
-            }
-            return null;
+        if (displayImage.getIcon() == null && avatarStudent.equals("")) {
+            coutError++;
+            JOptionPane.showMessageDialog(this, "Bạn Chưa Chọn Ảnh Cho Sinh Viên");
+        } else if (displayImage.getIcon() != null) {
+            avatarImg = ImageConvert.convertImg(displayImage.getIcon());
+        } else {
+            avatarImg = ImageConvert.convertImg(avatarStudent);
+        }
+
+        if (coutError == 0) {
+            Student st = new Student(studentCode, name, email, phone, gender, address, avatarImg);
+            return st;
+        }
+        return null;
     }
-    
-    public void showCurrentStudent(int index){
-        Student st = listStudents.get(index);
+
+    public void showCurrentStudent(int index) {
+        Student st = service.getStudentLists().get(index);
         codeInput.setText(st.getStudentCode());
         nameInput.setText(st.getName());
         emailInput.setText(st.getEmail());

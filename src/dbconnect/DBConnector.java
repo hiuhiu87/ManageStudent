@@ -35,4 +35,8 @@ public class DBConnector {
         return connection;
     }
 
+    
+    public static void main(String[] args) {
+        System.out.println(new DBConnector().getConnection());
+    }
 }
